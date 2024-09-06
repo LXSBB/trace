@@ -1,5 +1,6 @@
 // 浏览器嗅探
 export function detect(navigator) {
+  console.log('%c6666', 'color:red', navigator)
   try {
     let ua = navigator.userAgent;
     let platform = navigator.platform;
@@ -89,7 +90,11 @@ export function detect(navigator) {
         (firefox && ua.match(/Mobile/)) ||
         (ie && ua.match(/Touch/)))
     );
-    return { os, browser };
+    return {
+      date: navigator.userAgent,
+      os,
+      browser
+    };
   } catch (e) {
    return {}
   }

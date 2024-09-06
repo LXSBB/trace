@@ -40,16 +40,18 @@ declare global {
   }
 
   // 用户相关字段基类
-  type BaseUserTrace = {
+  type TypeUserTrace = {
     // 指纹ID，fingerprintId
     fpId: string
     // 用户ID
-    uid?: string | number
+    uId?: string | number
+    userId?: string | number
     // 用户名称
     userName?: string
     // 用户邮箱
     email?: string
     token?: string
+    serverId?: string | number
   }
 
   // 业务相关字段基类
@@ -74,7 +76,7 @@ declare global {
     pageRoute: string
   }
 
-  type BaseTraceInfo = BaseTrace & BaseBrowserTrace & BaseUserTrace & BaseAppTrace & BasePageTrace
+  type BaseTraceInfo = BaseTrace & BaseBrowserTrace & BaseAppTrace & BasePageTrace
 
   /** ================ 以下是业务数据类型 ================ */
 
@@ -200,6 +202,7 @@ declare global {
 
   // 完整的全链路日志
   type TraceData = BaseTraceInfo & {
+    userInfo: TypeUserTrace
     // 记录错误信息
     data?: TraceTypeData
     // 记录操作行为

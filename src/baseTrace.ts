@@ -50,8 +50,8 @@ export class BaseTrace implements BaseTraceInterface {
   }
   // 设备指纹id fingerprintId
   public fpId = ''
-  // user id
-  public uid = ''
+  serverId = ''
+  userId = ''
   userName = ''
   token = ''
   // appId
@@ -192,14 +192,17 @@ export class BaseTrace implements BaseTraceInterface {
       traceId: hasTraceId ? _data?.requestId : uuid(),
       ua: this.userAgent,
       connection: this.connection,
-      fpId: this.fpId,
       appId: this.appId,
       url: document.URL,
       pid: this.pageId,
       pageRoute: this.pageRoute,
-      uid: this.uid,
-      userName: this.userName,
-      token: this.token
+      userInfo: {
+        fpId: this.fpId,
+        userId: this.userId,
+        userName: this.userName,
+        token: this.token,
+        serverId: this.serverId
+      }
     }
     if (this.resourceWatch) {
       traceData.resources = this.resources
@@ -492,9 +495,10 @@ export class BaseTrace implements BaseTraceInterface {
   }
 
   public setUserinfo(info: any) {
-    this.uid = info.userId
+    this.userId = info.userId
     this.userName = info.userName
     this.token = info.token
+    this.serverId = info.serverId
   }
   public setPageInfo(info: any) {
     this.pageRoute = info.pageRoute
