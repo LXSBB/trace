@@ -37,6 +37,8 @@ export enum TraceTypes {
   CODE_ERROR = 'CodeError',
   // 日志
   CONSOLE = 'Console',
+  // 网络
+  NETWORK = 'Network',
   // 其它
   CUSTOMER = 'Customer'
 }

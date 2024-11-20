@@ -1,8 +1,17 @@
-import { BreadcrumbTypes, TraceDataSeverity, TraceDataTypes, BreadcrumbsCategorys, TraceLevelType, TraceTypes } from "../typings/common"
+import {
+  BreadcrumbTypes,
+  TraceDataSeverity,
+  TraceDataTypes,
+  BreadcrumbsCategorys,
+  TraceLevelType,
+  TraceTypes
+} from '../typings/common'
 
 // 获取时间
-export const getTimestamp = (): number => Date.now()
-
+export const getTimestamp = (): string => {
+  const now = new Date()
+  return now.toLocaleString()
+}
 
 export const getFetchStatusLevel = (status: number): TraceDataSeverity => {
   if (status >= 500) {
@@ -17,7 +26,6 @@ export const getFetchStatusLevel = (status: number): TraceDataSeverity => {
     return TraceDataSeverity.Else
   }
 }
-
 
 export const isResourceTarget = (target: HTMLElement) =>
   target instanceof HTMLScriptElement ||
@@ -131,24 +139,25 @@ export function getTraceDataType(type: TraceDataTypes) {
 
 export function getPerfLevel(data: TracePerf) {
   let level = TraceLevelType.Info
-  if (data.LCPRating === 'poor'
-      || data.FIDRating === 'poor'
-      || data.FCPRating === 'poor'
-      || data.TTFBRating === 'poor'
-      || data.CLSRating === 'poor'
-      || data.INPRating === 'poor'
+  if (
+    data.LCPRating === 'poor' ||
+    data.FIDRating === 'poor' ||
+    data.FCPRating === 'poor' ||
+    data.TTFBRating === 'poor' ||
+    data.CLSRating === 'poor' ||
+    data.INPRating === 'poor'
   ) {
     // console.log('[getPerfLevel] error')
     level = TraceLevelType.Error
     return
   }
   if (
-    data.LCPRating === 'needs improvement'
-      || data.CLSRating === 'needs improvement'
-      || data.FCPRating === 'needs improvement'
-      || data.FIDRating === 'needs improvement'
-      || data.INPRating === 'needs improvement'
-      || data.TTFBRating === 'needs improvement'
+    data.LCPRating === 'needs improvement' ||
+    data.CLSRating === 'needs improvement' ||
+    data.FCPRating === 'needs improvement' ||
+    data.FIDRating === 'needs improvement' ||
+    data.INPRating === 'needs improvement' ||
+    data.TTFBRating === 'needs improvement'
   ) {
     // console.log('[getPerfLevel] warn')
     level = TraceLevelType.Warn
@@ -158,18 +167,18 @@ export function getPerfLevel(data: TracePerf) {
 }
 
 export function uuid() {
-  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, (c) => {
+  return 'xxxxxxxx-xxxx-4xxx-yxxx-xxxxxxxxxxxx'.replace(/[xy]/g, c => {
     /* tslint:disable */
-    const r = (Math.random() * 16) | 0;
+    const r = (Math.random() * 16) | 0
     /* tslint:disable */
-    const v = c === 'x' ? r : (r & 0x3) | 0x8;
-    return v.toString(16);
-  });
+    const v = c === 'x' ? r : (r & 0x3) | 0x8
+    return v.toString(16)
+  })
 }
 
 export function safeStringify(obj: object): string {
   const set = new Set()
-  const str = JSON.stringify(obj, function (_key, value) {
+  const str = JSON.stringify(obj, function(_key, value) {
     if (set.has(value)) {
       return ''
     }
@@ -178,4 +187,12 @@ export function safeStringify(obj: object): string {
   })
   set.clear()
   return str
+}
+
+export const getMin = (numbers: number[]) => {
+  return numbers.reduce((min, current) => (current < min ? current : min), numbers[0])
+}
+
+export const getMax = (numbers: number[]) => {
+  return numbers.reduce((max, current) => (current > max ? current : max), numbers[0])
 }

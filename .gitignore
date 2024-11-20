@@ -36,6 +36,7 @@ thumbs.db
 .svn
 .CVS
 .idea
+.rpt2_cache
 node_modules/
 jscoverage_lib/
 bower_components/

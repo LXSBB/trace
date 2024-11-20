@@ -6,14 +6,13 @@ import {
   TraceDataTypes,
   BreadcrumbTypes,
   BreadcrumbsCategorys,
-  TraceBaseDataName,
+  TraceBaseDataName
 } from './common'
 /** 数据类型 */
 
 /** 基类 */
 
 declare global {
-
   // 全链路日志基类
   type BaseTrace = {
     // 唯一ID，用户侧生成
@@ -21,21 +20,21 @@ declare global {
     // 日志类型
     type: TraceTypes
     // 日志产生时间
-    createdAt: number
+    createdAt: number | string
     // 日志最后更新时间
-    updatedAt: number
-  };
+    updatedAt: number | string
+  }
 
   // 浏览器相关字段基类
   type BaseBrowserTrace = {
     // 当前浏览器的UserAgent
-    ua: any,
-    connection: Connection,
+    ua: any
+    connection: Connection
   }
 
   // 网络链接状态
   type Connection = {
-    online: boolean,
+    online: boolean
     effectiveType: 'slow-2g' | '2g' | '3g' | '4g' | '无法获取'
   }
 
@@ -86,7 +85,7 @@ declare global {
     // 动作等级
     level: TraceDataSeverity
     // 动作时间
-    time: number
+    time: number | string
     // 日志类型
     type: BreadcrumbTypes
     // 行为分类
@@ -115,8 +114,8 @@ declare global {
     level: TraceDataSeverity
     // 异常信息
     message: string
-    // 发生事件
-    time: number
+    // 发生时间
+    time: number | string
     // 日志类型
     type: TraceDataTypes
   }
@@ -125,7 +124,7 @@ declare global {
   type TraceDataFetch = TraceBaseData & {
     requestId?: string
     // 执行时间，用于统计耗时
-    elapsedTime: number
+    elapsedTime: number | string
     // 请求方法
     method: 'POST' | 'GET'
     // 请求类型
@@ -193,9 +192,19 @@ declare global {
     //   effectiveType: 'slow-2g' | '2g' | '3g' | '4g'
     // }
   }
+  type TracePing = {
+    ping: string
+    jitter: string
+  }
 
   // 一份错误信息的类型集合
-  type TraceTypeData = TraceDataFetch | TractDataCodeError | TraceDataPromise | TraceDataResource | TraceDataLog | TraceDataPageView
+  type TraceTypeData =
+    | TraceDataFetch
+    | TractDataCodeError
+    | TraceDataPromise
+    | TraceDataResource
+    | TraceDataLog
+    | TraceDataPageView
 
   // 面包屑记录行为日志
   type TraceBreadcrumbs = TraceAction[]

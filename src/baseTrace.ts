@@ -1,18 +1,36 @@
-
-import { BaseTraceInterface } from './core/interface';
-import { onVitals, mapMetric, generateUniqueId } from './core/webvitals';
-import { OnBeforeProps, OnFetchDataType } from './core/fetch';
-import { dataCategory2BreadcrumbsCategory, dataTypes2BreadcrumbsType, getPerfLevel, getTimestamp, getTraceDataLevel, getTraceDataType, hashCode, isResourceTarget, uuid } from './core/util';
-import { BreadcrumbTypes, BreadcrumbsCategorys, TraceDataSeverity, TraceDataTypes, TraceLevelType, TraceTypes } from './typings/common'
-import { getFingerprintId } from './core/fingerprint';
-import { sendByImg } from './core/send';
-import { detect } from './core/detect.js'
+import { BaseTraceInterface } from './core/interface'
+import { onVitals, mapMetric, generateUniqueId } from './core/webvitals'
+import { OnBeforeProps, OnFetchDataType } from './core/fetch'
+import {
+  dataCategory2BreadcrumbsCategory,
+  dataTypes2BreadcrumbsType,
+  getMax,
+  getMin,
+  getPerfLevel,
+  getTimestamp,
+  getTraceDataLevel,
+  getTraceDataType,
+  hashCode,
+  isResourceTarget,
+  uuid
+} from './core/util'
+import {
+  BreadcrumbTypes,
+  BreadcrumbsCategorys,
+  TraceDataSeverity,
+  TraceDataTypes,
+  TraceLevelType,
+  TraceTypes
+} from './typings/common'
+import { getFingerprintId } from './core/fingerprint'
+import { sendByImg } from './core/send'
+import { detect } from './core/detect'
 import SlsTracker from '@aliyun-sls/web-track-browser'
 import { trackerConfig } from './config'
 
 export interface TraceOptions {
-  perfOnSend: () => void;
-  perfBeforeSend: () => void;
+  perfOnSend: () => void
+  perfBeforeSend: () => void
   dsn?: string
   debug?: boolean
   appId: string
@@ -34,7 +52,6 @@ interface Navigator {
 }
 
 export class BaseTrace implements BaseTraceInterface {
-
   // 日志上报后端API
   public dsn: string = ''
   // 页面ID
@@ -99,17 +116,6 @@ export class BaseTrace implements BaseTraceInterface {
     }
     // 生成设备指纹id
     this.fpId = getFingerprintId('TraceCourse')
-    // 生成性能监测对象，检测资源加载
-    // this.observer = new PerformanceObserver((list, observer) => {
-    //   list.getEntries().forEach((entry) => {
-    //     this.debug && console.log(`name    : ${entry.name}`);
-    //     this.debug && console.log(`type    : ${entry.entryType}`);
-    //     this.debug && console.log(`duration: ${entry.duration}`);
-    //     if (entry.entryType === 'resource') {
-    //       this.handleObserverResource(entry as PerformanceResourceTiming)
-    //     }
-    //   });
-    // });
   }
 
   public log(log: TraceDataLog) {
@@ -119,9 +125,9 @@ export class BaseTrace implements BaseTraceInterface {
       type: dataTypes2BreadcrumbsType(log.type),
       category: dataCategory2BreadcrumbsCategory(log.type),
       message: log.message,
-      time: getTimestamp(),
+      time: getTimestamp()
     })
-    this.debug && console.log(`[log] data ${log}`);
+    this.debug && console.log(`[log] data ${log}`)
     this.send(log)
   }
 
@@ -133,7 +139,7 @@ export class BaseTrace implements BaseTraceInterface {
       message,
       time: getTimestamp(),
       dataId: hashCode(`${message}|${tag || ''}`),
-      tag,
+      tag
     })
   }
 
@@ -145,7 +151,7 @@ export class BaseTrace implements BaseTraceInterface {
       message,
       time: getTimestamp(),
       dataId: hashCode(`${message}|${tag || ''}`),
-      tag,
+      tag
     })
   }
 
@@ -157,12 +163,12 @@ export class BaseTrace implements BaseTraceInterface {
       message,
       time: getTimestamp(),
       dataId: hashCode(`${message}|${tag || ''}`),
-      tag,
+      tag
     })
   }
 
   // 配置链路数据
-  public setTraceData(data: TraceTypeData | TracePerf, hasTraceId: boolean = false) {
+  public setTraceData(data: TraceTypeData | TracePerf | TracePing, hasTraceId: boolean = false) {
     let type = TraceTypes.CONSOLE
     let level = TraceLevelType.Debug
     let _data = null
@@ -178,6 +184,12 @@ export class BaseTrace implements BaseTraceInterface {
       type = TraceTypes.PERF
       level = getPerfLevel(data as TracePerf)
       perf = data as TracePerf
+    }
+    // 如果是网络波动测试
+    if (!!(data as TracePing).ping) {
+      type = TraceTypes.NETWORK
+      level = TraceLevelType.Info
+      _data = data as TraceTypeData
     }
     // 获取实时网络状态
     this.connection.online = navigator.onLine
@@ -207,7 +219,7 @@ export class BaseTrace implements BaseTraceInterface {
     if (this.resourceWatch) {
       traceData.resources = this.resources
     }
-    this.debug && console.log('[setTraceData] traceData: ',traceData)
+    this.debug && console.log('[setTraceData] traceData: ', traceData)
     return traceData
   }
 
@@ -221,12 +233,13 @@ export class BaseTrace implements BaseTraceInterface {
 
   // 监听性能
   createPerfReport() {
-    const report = (metric) => {
-      this.perfData = { ...this.perfData, ...mapMetric(metric) };
-    };
+    const report = metric => {
+      this.perfData = { ...this.perfData, ...mapMetric(metric) }
+    }
 
     setTimeout(() => {
-      const supportedEntryTypes = (PerformanceObserver && PerformanceObserver.supportedEntryTypes) || []
+      const supportedEntryTypes =
+        (PerformanceObserver && PerformanceObserver.supportedEntryTypes) || []
       const isLatestVisibilityChangeSupported = supportedEntryTypes.indexOf('layout-shift') !== -1
 
       if (isLatestVisibilityChangeSupported) {
@@ -239,10 +252,14 @@ export class BaseTrace implements BaseTraceInterface {
         }
         addEventListener('visibilitychange', onVisibilityChange, true)
       } else {
-        addEventListener('pagehide', () => {
-          console.log('pagehide', this.perfData)
-          this.send(this.perfData)
-        }, { capture: true, once: true })
+        addEventListener(
+          'pagehide',
+          () => {
+            console.log('pagehide', this.perfData)
+            this.send(this.perfData)
+          },
+          { capture: true, once: true }
+        )
       }
     })
 
@@ -251,8 +268,8 @@ export class BaseTrace implements BaseTraceInterface {
 
   // 报错错误信息
   public saveError(event: ErrorEvent) {
-    const target = event.target || event.srcElement;
-    const isResTarget = isResourceTarget(target as HTMLElement);
+    const target = event.target || event.srcElement
+    const isResTarget = isResourceTarget(target as HTMLElement)
     if (!isResTarget) {
       // 是脚本类型文件报错
       const traceData: TraceTypeData = {
@@ -277,11 +294,14 @@ export class BaseTrace implements BaseTraceInterface {
       this.queue.push(this.setTraceData(traceData))
     } else {
       // 资源类型元素报错
-      const url = (target as HTMLElement).getAttribute('src') || (target as HTMLElement).getAttribute('href')
+      const url =
+        (target as HTMLElement).getAttribute('src') || (target as HTMLElement).getAttribute('href')
       const traceData: TraceTypeData = {
-        dataId: hashCode(`${(target as HTMLElement).nodeName.toLowerCase()}-${event.message}${url}`),
+        dataId: hashCode(
+          `${(target as HTMLElement).nodeName.toLowerCase()}-${event.message}${url}`
+        ),
         name: 'resource-load-error',
-        level: TraceDataSeverity.Warning,
+        level: TraceDataSeverity.Error,
         message: (event.target as any)?.outerHTML,
         time: getTimestamp(),
         type: TraceDataTypes.RESOURCE,
@@ -292,7 +312,7 @@ export class BaseTrace implements BaseTraceInterface {
         name: traceData.name,
         type: BreadcrumbTypes.RESOURCE,
         category: BreadcrumbsCategorys.Exception,
-        level: TraceDataSeverity.Warning,
+        level: TraceDataSeverity.Error,
         message: event.message,
         time: getTimestamp()
       })
@@ -307,23 +327,24 @@ export class BaseTrace implements BaseTraceInterface {
       let level = TraceDataSeverity.Info
       if (entry.duration > 1000 && entry.duration < 1500) {
         level = TraceDataSeverity.Warning
-      } else  if (entry.duration > 1500) {
+      } else if (entry.duration > 1500) {
         level = TraceDataSeverity.Error
       }
-      entry.duration > 1000 && this.resources.push({
-        url: entry.name,
-        name: `${entry.entryType}-duration-${entry.initiatorType}`,
-        type: TraceDataTypes.PERF,
-        level,
-        message: `duration:${Math.round(entry.duration)}`,
-        time: getTimestamp(),
-        dataId: hashCode(`${entry.entryType}-${entry.name}`),
-      })
+      entry.duration > 1000 &&
+        this.resources.push({
+          url: entry.name,
+          name: `${entry.entryType}-duration-${entry.initiatorType}`,
+          type: TraceDataTypes.PERF,
+          level,
+          message: `duration:${Math.round(entry.duration)}`,
+          time: getTimestamp(),
+          dataId: hashCode(`${entry.entryType}-${entry.name}`)
+        })
     }
   }
 
   // 请求之前发送日志
-  onFetchBefore(props: OnBeforeProps){
+  onFetchBefore(props: OnBeforeProps) {
     this.saveBreadcrumb({
       name: 'fetch',
       level: TraceDataSeverity.Normal,
@@ -374,7 +395,7 @@ export class BaseTrace implements BaseTraceInterface {
       requestId: result.traceId
     }
     this.debug && console.log('[onFetchAfter] data: ', result)
-    this.queue.push(this.setTraceData(data, true))
+    this.queue.push(this.setTraceData(data, !!result.traceId))
   }
 
   // 请求报错日志发送
@@ -417,20 +438,24 @@ export class BaseTrace implements BaseTraceInterface {
   // 监听全局报错
   public onGlobalError() {
     const _t = this
-    window.addEventListener('error', (event) => {
-      _t.saveError(event)
-    }, true)
+    window.addEventListener(
+      'error',
+      event => {
+        _t.saveError(event)
+      },
+      true
+    )
     // 捕获未catch的reject
     window.addEventListener('unhandledrejection', (event: any) => {
       this.debug && console.log(event)
       if (event instanceof PromiseRejectionEvent) {
-        const errorEvent = new ErrorEvent("promiseRejection", {
+        const errorEvent = new ErrorEvent('promiseRejection', {
           message: event.reason.toString(),
-          error: event.reason,
-        });
-        _t.saveError(errorEvent);
+          error: event.reason
+        })
+        _t.saveError(errorEvent)
       } else if (event instanceof ErrorEvent) {
-        _t.saveError(event);
+        _t.saveError(event)
       }
     })
   }
@@ -438,7 +463,7 @@ export class BaseTrace implements BaseTraceInterface {
   // 监听全局点击事件
   public onGlobalClick() {
     const _t = this
-    window.addEventListener('click', (event) => {
+    window.addEventListener('click', event => {
       const target = event.target as HTMLElement
       const innerHTML = target.innerHTML
       const bc: TraceAction = {
@@ -455,17 +480,67 @@ export class BaseTrace implements BaseTraceInterface {
 
   // 监听网络信息
   public connectionWatch() {
+    // 监听网络链接状态
     const _t = this
-    const connection = (navigator as unknown as Navigator ).connection ||
-      (navigator as unknown as Navigator ).mozConnection ||
-      (navigator as unknown as Navigator ).webkitConnection;
+    const connection =
+      ((navigator as unknown) as Navigator).connection ||
+      ((navigator as unknown) as Navigator).mozConnection ||
+      ((navigator as unknown) as Navigator).webkitConnection
     if (connection) {
       _t.connection.effectiveType = connection.effectiveType
       connection.addEventListener('change', () => {
-        this.debug && console.log('[connectionChange] message',connection.effectiveType)
+        this.debug && console.log('[connectionChange] message', connection.effectiveType)
         _t.connection.effectiveType = connection.effectiveType
-      });
+      })
     }
+    // 测量ping,jitter抖动和下载速度
+    this.measureNetworkSpeed()
+  }
+
+  // 测量ping,jitter抖动和下载速度
+  public measureNetworkSpeed() {
+    const imgUrl: string = 'https://cdnws.51tyty.com/51tyty/images/favicon.ico'
+    let count = 0
+    let jitter = 0
+    let pingList: any = []
+    const timer = setInterval(() => {
+      const img = new Image()
+      const startTime = new Date().getTime()
+      img.src = imgUrl + `?d=${startTime}`
+      img.onload = () => {
+        const endTime = new Date().getTime()
+        const delta = endTime - startTime
+        pingList.push(delta)
+        if ((count + 1) % 10 === 0) {
+          const maxPing = getMax(pingList)
+          const minPing = getMin(pingList)
+          jitter = maxPing - minPing
+          this.queue.push(
+            this.setTraceData({
+              ping: pingList.join('ms->') + 'ms',
+              jitter: jitter + 'ms'
+            })
+          )
+          pingList = []
+          clearInterval(timer)
+        }
+        count++
+      }
+      img.onerror = () => {
+        pingList.push(9999)
+        if ((count + 1) % 10 === 0) {
+          this.queue.push(
+            this.setTraceData({
+              ping: pingList.join('ms->') + 'ms',
+              jitter: jitter + 'ms'
+            })
+          )
+          pingList = []
+          clearInterval(timer)
+        }
+        count++
+      }
+    }, 3000)
   }
 
   // 监听资源加载
@@ -473,15 +548,15 @@ export class BaseTrace implements BaseTraceInterface {
     const _t = this
     this.observer = new PerformanceObserver((list, observer) => {
       list.getEntries().forEach((entry: PerformanceResourceTiming) => {
-        this.debug && console.log(`name    : ${entry.name}`);
-        this.debug && console.log(`type    : ${entry.entryType}`);
-        this.debug && console.log(`duration: ${entry.duration}`);
+        this.debug && console.log(`name    : ${entry.name}`)
+        this.debug && console.log(`type    : ${entry.entryType}`)
+        this.debug && console.log(`duration: ${entry.duration}`)
         _t.handleObserverResource(entry)
-      });
-    });
+      })
+    })
     this.observer.observe({
-      entryTypes: ["resource"],
-    });
+      entryTypes: ['resource']
+    })
   }
 
   // 收集行为事件
