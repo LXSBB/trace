@@ -94,6 +94,7 @@ declare global {
 
   // 行为日志
   type TraceAction = TraceBaseAction & {
+    index?: number
     // 行为动作相关的信息，可以是DOM，可以是错误信息，可以是自定义信息
     message?: string | number
     // 请求参数

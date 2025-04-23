@@ -97,6 +97,8 @@ export class BaseTrace implements BaseTraceInterface {
   public sendTimer = 1000
   // 阿里日志sdk实例
   public track: any = null
+  saveBreadcrumbTimes: number = 0
+  saveBreadcrumbIndex: number = 0
 
   public constructor(options: TraceOptions) {
     console.log('%cBaseTrace constructor.', 'color:green')
@@ -562,9 +564,33 @@ export class BaseTrace implements BaseTraceInterface {
   // 收集行为事件
   public saveBreadcrumb(data: TraceAction) {
     if (this.breadcrumbEnabled) {
-      this.breadcrumb.push(data)
+      this.breadcrumb.push(
+        Object.assign(data, {
+          index: this.saveBreadcrumbIndex
+        })
+      )
+      this.saveBreadcrumbIndex++
       if (this.breadcrumb.length > this.maxBreadcrumb) {
         this.breadcrumb.shift()
+      }
+      // 对操作计数, 每10次提交一次日志
+      if (this.saveBreadcrumbTimes === 10) {
+        this.saveBreadcrumbTimes = 0
+        this.track.send({
+          type: 'Save Breadcrumb',
+          breadcrumbs: this.breadcrumb,
+          pageRoute: this.pageRoute,
+          url: document.URL,
+          userInfo: {
+            fpId: this.fpId,
+            userId: this.userId,
+            userName: this.userName,
+            token: this.token,
+            serverId: this.serverId
+          }
+        })
+      } else {
+        this.saveBreadcrumbTimes++
       }
     }
   }
